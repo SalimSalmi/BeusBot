@@ -38,14 +38,15 @@ class SkipState:
 
 
 class Response:
-    __slots__ = ['_content', 'reply', 'delete_after', 'codeblock', '_codeblock']
+    __slots__ = ['_content', 'reply', 'delete_after', 'codeblock', '_codeblock', 'simple']
 
-    def __init__(self, content, reply=False, delete_after=0, codeblock=None):
+    def __init__(self, content, reply=False, delete_after=0, codeblock=None, simple=False):
         self._content = content
         self.reply = reply
         self.delete_after = delete_after
         self.codeblock = codeblock
         self._codeblock = "```{!s}\n{{}}\n```".format('' if codeblock is True else codeblock)
+        self.simple = simple
 
     @property
     def content(self):
@@ -59,6 +60,7 @@ class AnimatedResponse(Response):
     def __init__(self, content, *sequence, delete_after=0):
         super().__init__(content, delete_after=delete_after)
         self.sequence = sequence
+
 
 
 class Serializer(json.JSONEncoder):

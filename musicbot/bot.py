@@ -48,6 +48,9 @@ log = logging.getLogger(__name__)
 
 
 class MusicBot(discord.Client):
+
+    doggo_counter = 0
+
     def __init__(self, config_file=None, perms_file=None, aliases_file=None):
         try:
             sys.stdout.write("\x1b]2;MusicBot {}\x07".format(BOTVERSION))
@@ -800,11 +803,6 @@ class MusicBot(discord.Client):
         log.debug("Validating permissions config")
         await self.permissions.async_validate(self)
 
-
-
-#######################################################################################################################
-
-
     async def safe_send_message(self, dest, content, **kwargs):
         tts = kwargs.pop('tts', False)
         quiet = kwargs.pop('quiet', False)
@@ -1107,13 +1105,14 @@ class MusicBot(discord.Client):
                         'The options missing are: {0}'.format(self.config.missing_keys))
             print(flush=True)
 
+        await self.safe_send_message(self.get_channel(95514792831225856), "When there's no more room in hell, {0} will walk the earth".format(self.user.name))
         # t-t-th-th-that's all folks!
 
     def _gen_embed(self):
         """Provides a basic template for embeds"""
         e = discord.Embed()
         e.colour = 7506394
-        e.set_footer(text='Just-Some-Bots/MusicBot ({})'.format(BOTVERSION), icon_url='https://i.imgur.com/gFHBoZA.png')
+        # e.set_footer(text='Just-Some-Bots/MusicBot ({})'.format(BOTVERSION), icon_url='https://i.imgur.com/gFHBoZA.png')
         e.set_author(name=self.user.name, url='https://github.com/Just-Some-Bots/MusicBot', icon_url=self.user.avatar_url)
         return e
 
@@ -2647,8 +2646,21 @@ class MusicBot(discord.Client):
 
         return Response(codeblock.format(result))
 
+    def doggo_check(self, message):
+        if message.content == '<:doggo:581489110263529472>':
+            self.doggo_counter = self.doggo_counter + 1
+        else:
+            self.doggo_counter = 0
+
     async def on_message(self, message):
         await self.wait_until_ready()
+
+        # Doggo check
+        self.doggo_check(message)
+        if(self.doggo_counter == 3):
+            sentmsg = await self.safe_send_message(
+                    message.channel, '<:doggo:581489110263529472>'
+                )
 
         message_content = message.content.strip()
         if not message_content.startswith(self.config.command_prefix):
@@ -2812,7 +2824,7 @@ class MusicBot(discord.Client):
 
             response = await handler(**handler_kwargs)
             if response and isinstance(response, Response):
-                if not isinstance(response.content, discord.Embed) and self.config.embeds:
+                if not isinstance(response.content, discord.Embed) and self.config.embeds and not response.simple:
                     content = self._gen_embed()
                     content.title = command
                     content.description = response.content
@@ -2820,7 +2832,7 @@ class MusicBot(discord.Client):
                     content = response.content
 
                 if response.reply:
-                    if isinstance(content, discord.Embed):
+                    if isinstance(content, discord.Embed) and not response.simple:
                         content.description = '{} {}'.format(message.author.mention, content.description if content.description is not discord.Embed.Empty else '')
                     else:
                         content = '{}: {}'.format(message.author.mention, content)
@@ -2996,7 +3008,6 @@ class MusicBot(discord.Client):
         if guild.id in self.players:
             self.players.pop(guild.id).kill()
 
-
     async def on_guild_available(self, guild:discord.Guild):
         if not self.init_ok:
             return # Ignore pre-ready events
@@ -3013,7 +3024,6 @@ class MusicBot(discord.Client):
                 self.server_specific_data[guild]['availability_paused'] = False
                 player.resume()
 
-
     async def on_guild_unavailable(self, guild:discord.Guild):
         log.debug("Guild \"{}\" has become unavailable.".format(guild.name))
 
@@ -3029,3 +3039,26 @@ class MusicBot(discord.Client):
             if vc.guild == guild:
                 return vc
         return None
+
+    async def cmd_doggo(self):
+        """
+        Usage:
+            {command_prefix}doggo
+
+        Sends a doggo
+        """
+        return Response('<:doggo:581489110263529472>', simple=True)
+
+    async def cmd_roll(self, r='100'):
+        """
+        Usage:
+            {command_prefix}doggo
+
+        Random roll between 0 and a specified number.
+        Default 100.
+        """
+
+        r = max(1,int(r))
+        randr = random.randint(0,r)
+
+        return Response(randr, reply=True)
