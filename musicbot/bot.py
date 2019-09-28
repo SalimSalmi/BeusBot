@@ -11,6 +11,7 @@ import pathlib
 import traceback
 import math
 import re
+import datetime
 
 import aiohttp
 import discord
@@ -67,6 +68,8 @@ class MusicBot(discord.Client):
 
         if aliases_file is None:
             aliases_file = AliasesDefault.aliases_file
+
+        self.uptime = datetime.datetime.utcnow()
 
         self.players = {}
         self.exit_signal = None
@@ -694,7 +697,6 @@ class MusicBot(discord.Client):
             m = await self.safe_send_message(channel, message, quiet=True)
 
         self.server_specific_data[guild]['last_np_msg'] = m
-
 
     async def serialize_queue(self, guild, *, dir=None):
         """
@@ -3062,3 +3064,28 @@ class MusicBot(discord.Client):
         randr = random.randint(0,r)
 
         return Response(randr, reply=True)
+
+    async def cmd_uptime(self):
+        """Show Beus' uptime."""
+        passed = self.get_bot_uptime()
+        return Response(passed)
+
+    def get_bot_uptime(self, *, brief=False):
+        # Courtesy of Danny
+        now = datetime.datetime.utcnow()
+        delta = now - self.uptime
+        hours, remainder = divmod(int(delta.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days, hours = divmod(hours, 24)
+
+        if not brief:
+            if days:
+                fmt = '{d} days, {h} hours, {m} minutes, and {s} seconds'
+            else:
+                fmt = '{h} hours, {m} minutes, and {s} seconds'
+        else:
+            fmt = '{h}h {m}m {s}s'
+            if days:
+                fmt = '{d}d ' + fmt
+
+        return fmt.format(d=days, h=hours, m=minutes, s=seconds)
