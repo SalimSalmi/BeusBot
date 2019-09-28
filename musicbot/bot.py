@@ -1107,7 +1107,7 @@ class MusicBot(discord.Client):
                         'The options missing are: {0}'.format(self.config.missing_keys))
             print(flush=True)
 
-        await self.safe_send_message(self.get_channel(95514792831225856), "When there's no more room in hell, {0} will walk the earth".format(self.user.name))
+        # await self.safe_send_message(self.get_channel(95514792831225856), "When there's no more room in hell, {0} will walk the earth".format(self.user.name))
         # t-t-th-th-that's all folks!
 
     def _gen_embed(self):
@@ -3089,3 +3089,15 @@ class MusicBot(discord.Client):
                 fmt = '{d}d ' + fmt
 
         return fmt.format(d=days, h=hours, m=minutes, s=seconds)
+    
+    @owner_only
+    async def cmd_kick(self, message):
+        print(message)
+        print(type(message))
+        print(message.mentions)
+
+        if len(message.mentions) == 1:
+            await message.mentions[0].kick()
+            return Response('Begone thot {0}'.format(message.mentions[0]))
+
+        
